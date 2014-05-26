@@ -1,0 +1,16 @@
+#!/bin/sh
+
+TEST_FILE_NAME=$1
+TEST_OUTPUT_ACTUAL=${1}_actual
+TEST_OUTPUT_EXPECTED=${1}_expected
+
+./$1 > $TEST_OUTPUT_ACTUAL
+diff -u $TEST_OUTPUT_EXPECTED $TEST_OUTPUT_ACTUAL
+TEST_DIFFERENCES=$?
+
+if [ -n "$(command -v valgrind)" ]; then
+    valgrind --error-exitcode=1 --quiet ./$1 2>&1 >/dev/null
+    TEST_VALGRIND=$?
+fi
+
+exit $(( TEST_DIFFERENCES + TEST_VALGRIND ))
