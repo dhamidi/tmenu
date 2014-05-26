@@ -23,5 +23,5 @@ test: script/test buffer_test menu_test
 	script/test menu_test
 
 clean:
-	rm -vf ./buffer_test ./*.o
+	rm -vf ./*_test ./*.o
 	rm -vf ./*_actual
