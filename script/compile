@@ -1,0 +1,2 @@
+#!/bin/sh
+gcc -g -std=c99 -pedantic -Wall -Werror -c -o $2 $1
