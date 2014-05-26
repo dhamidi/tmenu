@@ -16,5 +16,10 @@ int main(int argc, char** argv) {
 
    Buffer.puts(buffer,"new ");
    puts(Buffer.string(buffer, &string, &string_len));
+
+   Buffer.backward(buffer, 100);
+   Buffer.forward(buffer, 4);
+   Buffer.puts(buffer," t");
+   puts(Buffer.string(buffer, &string, &string_len));
    return 0;
 }

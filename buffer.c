@@ -108,8 +108,8 @@ static char* bufstring(BUFFER self, char** buf, size_t* bufsize) {
 
 static void bufforward(BUFFER self, int by) {
    while (by --> 0 && self->gapend < self->capacity - 1) {
-      self->data[self->gapstart - 2] = self->data[self->gapend - 2];
-      self->data[self->gapend - 2] = 0;
+      self->data[self->gapstart - 1] = self->data[self->gapend - 1];
+      self->data[self->gapend - 1] = 0;
       self->gapstart++;
       self->gapend++;
    }
