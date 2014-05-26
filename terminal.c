@@ -1,10 +1,10 @@
 #include "terminal.h"
 
 static const char* dirs[] = {
-   "\033[%A",
-   "\033[%B",
-   "\033[%C",
-   "\033[%D",
+   "\033[%dA",
+   "\033[%dB",
+   "\033[%dC",
+   "\033[%dD",
 };
 
 enum TERMINAL_DIR {
@@ -48,6 +48,10 @@ static void col(FILE* out, int x) {
    fprintf(out, "\033[%dG", x);
 }
 
+static void highlight(FILE* out, int on) {
+   fprintf(out, "\033[%dm", on ? 7 : 0);
+}
+
 struct terminal_interface Terminal = {
    .left = left,
    .right = right,
@@ -55,4 +59,5 @@ struct terminal_interface Terminal = {
    .down = down,
    .erase = erase,
    .col = col,
+   .highlight = highlight,
 };

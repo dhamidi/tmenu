@@ -9,7 +9,7 @@ diff -u $TEST_OUTPUT_EXPECTED $TEST_OUTPUT_ACTUAL
 TEST_DIFFERENCES=$?
 
 if [ -n "$(command -v valgrind)" ]; then
-    valgrind --error-exitcode=1 --quiet ./$1 2>&1 >/dev/null
+    valgrind --error-exitcode=1 --leak-check=full --quiet ./$1 2>&1 >/dev/null
     TEST_VALGRIND=$?
 fi
 

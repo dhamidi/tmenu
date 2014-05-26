@@ -10,6 +10,7 @@ extern struct terminal_interface {
    void (*down)(FILE*, int);
    void (*erase)(FILE*, int);
    void (*col)(FILE*, int);
+   void (*highlight)(FILE*,int);
 } Terminal;
 
 #endif
