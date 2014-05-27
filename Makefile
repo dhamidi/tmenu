@@ -3,6 +3,11 @@
 .c.o: script/compile
 	script/compile $< $@
 
+tmenu: main.o terminal.o buffer.o menu.o util.o
+	script/link $@ main.o terminal.o buffer.o menu.o util.o
+
+main.o: main.c script/compile config.h terminal.h buffer.h menu.h
+
 terminal.o: terminal.c terminal.h script/compile
 
 util.o: util.h util.c script/compile
@@ -23,5 +28,6 @@ test: script/test buffer_test menu_test
 	script/test menu_test
 
 clean:
+	rm -v  tmenu
 	rm -vf ./*_test ./*.o
 	rm -vf ./*_actual
