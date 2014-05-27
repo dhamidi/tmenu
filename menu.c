@@ -63,6 +63,10 @@ static void menudestroy(MENU* self) {
    *self = NULL;
 }
 
+static const char* menuselection(MENU self) {
+   return self->items[self->matches[self->cursor]];
+}
+
 static void menusetprompt(MENU self, const char* prompt) {
    size_t newlen = strlen(prompt);
    size_t oldlen = strlen(self->prompt);
@@ -124,7 +128,7 @@ static void menuadditem(MENU self, const char* item) {
 }
 
 static void menuselectnext(MENU self) {
-   if (self->cursor < self->len - 1) {
+   if (self->cursor < self->curmatch) {
       self->cursor++;
    }
 }
@@ -226,6 +230,7 @@ struct menu_interface Menu = {
    .add_item = menuadditem,
    .select_next = menuselectnext,
    .select_prev = menuselectprev,
+   .selection = menuselection,
    .display = menudisplay,
    .match = menumatch,
    .buffer = menubuffer,

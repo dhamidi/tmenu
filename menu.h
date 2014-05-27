@@ -15,6 +15,7 @@ extern struct menu_interface {
    void    (*add_item)(MENU, const char*);
    void    (*select_next)(MENU);
    void    (*select_prev)(MENU);
+   const char* (*selection)(MENU);
    void    (*display)(MENU, FILE*);
    void    (*match)(MENU);
    BUFFER  (*buffer)(MENU);
