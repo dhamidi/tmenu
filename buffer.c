@@ -130,10 +130,9 @@ static size_t bufpoint(BUFFER self) {
 }
 
 static void bufdelete(BUFFER self) {
-   if (!bufisfull(self)) {
-      self->gapstart++;
-   } else if (self->gapend < self->capacity - 1) {
+   if ( self->gapend < self->capacity - 1 ) {
       self->gapend++;
+      self->data[self->gapend] = 0;
    }
 }
 
@@ -144,10 +143,14 @@ static void bufclear(BUFFER self) {
 }
 
 static void bufdeletetoend(BUFFER self) {
+   char* after = (char*)bufafter(self);
+   memset(after, 0, strlen(after));
    self->gapend = self->capacity - 1;
 }
 
 static void bufdeletetobeginning(BUFFER self) {
+   char* before = (char*)bufbefore(self);
+   memset(before, 0, strlen(before));
    self->gapstart = 1;
 }
 
