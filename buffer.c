@@ -131,8 +131,8 @@ static size_t bufpoint(BUFFER self) {
 
 static void bufdelete(BUFFER self) {
    if ( self->gapend < self->capacity - 1 ) {
+      self->data[self->gapend - 1] = 0;
       self->gapend++;
-      self->data[self->gapend] = 0;
    }
 }
 
