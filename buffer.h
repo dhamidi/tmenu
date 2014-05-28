@@ -9,8 +9,8 @@ extern struct buffer_interface {
    BUFFER (*new)(size_t);
    void  (*destroy)(BUFFER*);
 
-   void  (*putc)(BUFFER, int);
-   void  (*puts)(BUFFER, const char*);
+   void  (*cput)(BUFFER, int);
+   void  (*sput)(BUFFER, const char*);
    char* (*string)(BUFFER, char**, size_t*);
    void  (*forward)(BUFFER, int);
    void  (*backward)(BUFFER, int);

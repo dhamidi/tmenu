@@ -161,9 +161,8 @@ int main(int argc, char** argv) {
    setup();
 
    while ( read(STDIN_FILENO, &buf, 4) != 0 ) {
-
-      if (buf[0] >= 0x20) {
-         Buffer.putc(Menu.buffer(menu), buf[0]);
+      if (buf[0] >= 0x20 && buf[0] < 0x7f) {
+         Buffer.cput(Menu.buffer(menu), (int)buf[0]);
          Menu.match(menu);
       } else {
          action = KEYMAP[ (unsigned char)buf[0] ];

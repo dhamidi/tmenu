@@ -74,7 +74,7 @@ static void bufexpand(BUFFER self) {
    free(old_data);
 }
 
-static void bufputc(BUFFER self, int c) {
+static void bufcput(BUFFER self, int c) {
    unsigned char byte = (unsigned char)c;
    if (bufisfull(self)) {
       bufexpand(self);
@@ -85,9 +85,9 @@ static void bufputc(BUFFER self, int c) {
    self->gapstart++;
 }
 
-static void bufputs(BUFFER self, const char* str) {
+static void bufsput(BUFFER self, const char* str) {
    while (*str) {
-      bufputc(self, *str++);
+      bufcput(self, *str++);
    }
 }
 
@@ -158,8 +158,8 @@ struct buffer_interface Buffer = {
    .new = bufnew,
    .destroy = bufdestroy,
 
-   .putc = bufputc,
-   .puts = bufputs,
+   .cput = bufcput,
+   .sput = bufsput,
    .string = bufstring,
    .forward = bufforward,
    .backward = bufbackward,
