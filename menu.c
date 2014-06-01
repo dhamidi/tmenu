@@ -167,6 +167,7 @@ static BUFFER menubuffer(MENU self) {
 
 static void displayprompt(MENU self, FILE* out) {
    const char* inputpos = Buffer.after(self->input);
+   size_t utf8bytes = 1;
 
    Terminal.up(out, self->y_offset);
    Terminal.erase(out, 2);      /* whole line */
@@ -177,12 +178,19 @@ static void displayprompt(MENU self, FILE* out) {
    Terminal.highlight(out, 1);
    if ( inputpos[0] ) {
       fprintf(out, "%c", inputpos[0]);
+      if ( (unsigned char)inputpos[0] > 0x70 ) {
+         // UTF-8
+         while ( (unsigned char)inputpos[utf8bytes] >> 6 == 2) {
+            fprintf(out, "%c", inputpos[utf8bytes]);
+            utf8bytes++;
+         }
+      }
    } else {
       fprintf(out, " ");
    }
    Terminal.highlight(out, 0);
 
-   fprintf(out, "%s\n", inputpos + 1);
+   fprintf(out, "%s\n", inputpos + utf8bytes);
 
    self->y_offset = 1;
 }

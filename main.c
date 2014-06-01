@@ -72,6 +72,7 @@ enum key {
    KEY_CTRL_P = 0x10,
    KEY_CTRL_N = 0xe,
    KEY_ENTER  = 0xa,
+   KEY_BACKSPACE = 0x7f,
 };
 
 typedef int (*action_fn)(MENU);
@@ -86,8 +87,62 @@ static int action_select_prev(MENU menu) {
    return 1;
 }
 
+static int action_forward(MENU menu) {
+   BUFFER buf = Menu.buffer(menu);
+   const char* after = Buffer.after(buf);
+
+   Buffer.forward(buf, 1);
+   while ( (unsigned char)*(++after) >> 6 == 2)
+      Buffer.forward(buf, 1);
+
+   return 1;
+}
+
+static int action_backward(MENU menu) {
+   BUFFER buf = Menu.buffer(menu);
+   const char* before = Buffer.before(buf);
+   size_t before_len = Buffer.point(buf) - 1;
+   size_t pos = before_len - 1;
+
+   if ( (unsigned char)before[pos] <= 0x70) {
+      // ASCII
+      Buffer.backward(buf, 1);
+   } else {
+      // UTF-8
+      while ( (unsigned char)before[pos] >> 6 == 2) {
+         pos--;
+      }
+      Buffer.backward(buf, before_len - pos);
+   }
+
+
+   return 1;
+}
+
 static int action_delete_char(MENU menu) {
-   Buffer.delete(Menu.buffer(menu));
+   BUFFER buf = Menu.buffer(menu);
+   const char* after = Buffer.after(buf);
+
+   Buffer.delete(buf);
+   while ( (unsigned char)*(++after) >> 6 == 2 )
+      Buffer.delete(buf);
+
+   Menu.match(menu);
+   return 1;
+}
+
+static int action_delete_char_before(MENU menu) {
+   BUFFER buf = Menu.buffer(menu);
+   size_t point_before = Buffer.point(buf);
+   size_t point_after = point_before;
+
+   action_backward(menu);
+
+   point_after = Buffer.point(buf);
+
+   while ( point_after++ < point_before )
+      Buffer.delete(Menu.buffer(menu));
+
    Menu.match(menu);
    return 1;
 }
@@ -101,16 +156,6 @@ static int action_delete_to_beginning(MENU menu) {
 static int action_delete_to_end(MENU menu) {
    Buffer.delete_to_end(Menu.buffer(menu));
    Menu.match(menu);
-   return 1;
-}
-
-static int action_forward(MENU menu) {
-   Buffer.forward(Menu.buffer(menu), 1);
-   return 1;
-}
-
-static int action_backward(MENU menu) {
-   Buffer.backward(Menu.buffer(menu), 1);
    return 1;
 }
 
@@ -140,6 +185,7 @@ static action_fn KEYMAP[256] = {
    [KEY_CTRL_K] = action_delete_to_end,
    [KEY_CTRL_D] = action_delete_char,
    [KEY_ENTER]  = action_confirm,
+   [KEY_BACKSPACE] = action_delete_char_before,
 };
 
 int main(int argc, char** argv) {
@@ -161,18 +207,19 @@ int main(int argc, char** argv) {
    setup();
 
    while ( read(STDIN_FILENO, &buf, 4) != 0 ) {
-      if (buf[0] >= 0x20 && buf[0] < 0x7f) {
-         Buffer.cput(Menu.buffer(menu), (int)buf[0]);
+      action = KEYMAP[ (unsigned char)buf[0] ];
+
+      if (!action) {
+         Buffer.sput(Menu.buffer(menu), buf);
          Menu.match(menu);
       } else {
-         action = KEYMAP[ (unsigned char)buf[0] ];
-
          if (action && ! action(menu) ) {
-               goto exit;
+            goto exit;
          }
       }
 
       Menu.display(menu, stdout);
+      memset(&buf, 0, 4);
    }
 
   exit:
