@@ -1,7 +1,16 @@
 .POSIX:
 
+PREFIX=/usr/local
+
 .c.o: script/compile
 	script/compile $< $@
+
+install: tmenu test
+	mkdir -p $(PREFIX)/bin
+	cp tmenu $(PREFIX)/bin/
+	chmod 755 $(PREFIX)/bin/tmenu
+	mkdir -p $(PREFIX)/share/man/man1
+	cp tmenu.1 $(PREFIX)/share/man/man1
 
 tmenu: main.o terminal.o buffer.o menu.o util.o
 	script/link $@ main.o terminal.o buffer.o menu.o util.o
