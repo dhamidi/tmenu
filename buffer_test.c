@@ -7,7 +7,7 @@ int main(int argc, char** argv) {
    char*  string = NULL;
    size_t string_len = 0;
 
-   Buffer.puts(buffer, "hello, world");
+   Buffer.sput(buffer, "hello, world");
    printf("%ld\n", (long int)Buffer.point(buffer));
    puts(Buffer.string(buffer, &string, &string_len));
 
@@ -16,12 +16,12 @@ int main(int argc, char** argv) {
    fputs("<GAP>", stdout);
    puts(Buffer.after(buffer));
 
-   Buffer.puts(buffer,"new ");
+   Buffer.sput(buffer,"new ");
    puts(Buffer.string(buffer, &string, &string_len));
 
    Buffer.backward(buffer, 100);
    Buffer.forward(buffer, 4);
-   Buffer.puts(buffer," t");
+   Buffer.sput(buffer," t");
    puts(Buffer.string(buffer, &string, &string_len));
 
    Buffer.delete_to_beginning(buffer);
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
    Buffer.delete_to_end(buffer);
    puts(Buffer.string(buffer, &string, &string_len));
 
-   Buffer.puts(buffer, "κάθαρσις");
+   Buffer.sput(buffer, "κάθαρσις");
    puts(Buffer.string(buffer, &string, &string_len));
 
    Buffer.destroy(&buffer);

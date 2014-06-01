@@ -7,7 +7,7 @@ int main(int argc, char** argv) {
    Menu.add_item(menu, "hello world");
    Menu.add_item(menu, "goodbye world");
    Menu.add_item(menu, "cruel world");
-   Buffer.puts(Menu.buffer(menu), "world");
+   Buffer.sput(Menu.buffer(menu), "world");
    Buffer.backward(Menu.buffer(menu), 100);
    Menu.match(menu);
    Menu.select_next(menu);
