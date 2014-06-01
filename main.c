@@ -22,10 +22,23 @@ static const char* example_items[] = {
    NULL
 };
 
-void setup(void) {
+struct display {
+   FILE* file;
+   int   fd;
+};
+
+void setup_display(struct display * ctx) {
    struct termios terminal_settings = { 0 };
 
-   if ( tcgetattr(STDIN_FILENO, &terminal_settings) == -1 ) {
+   ctx->file = fopen("/dev/tty", "r+");
+   if (ctx->file == NULL) {
+      perror(PROGRAM_NAME ":open:/dev/tty");
+      abort();
+   }
+
+   ctx->fd = fileno(ctx->file);
+
+   if ( tcgetattr(ctx->fd, &terminal_settings) == -1 ) {
       fprintf(stderr, "%s: failed to get terminal settings: %s\n",
               PROGRAM_NAME, strerror(errno));
       abort();
@@ -33,17 +46,17 @@ void setup(void) {
 
    terminal_settings.c_lflag &= ~(ICANON|ECHO);
 
-   if ( tcsetattr(STDIN_FILENO, TCSANOW, &terminal_settings) == -1 ) {
+   if ( tcsetattr(ctx->fd, TCSANOW, &terminal_settings) == -1 ) {
       fprintf(stderr, "%s: failed to set terminal settings: %s\n",
               PROGRAM_NAME, strerror(errno));
       abort();
    }
 }
 
-void teardown(void) {
+void teardown_display(struct display * ctx) {
    struct termios terminal_settings = { 0 };
 
-   if ( tcgetattr(STDIN_FILENO, &terminal_settings) == -1 ) {
+   if ( tcgetattr(ctx->fd, &terminal_settings) == -1 ) {
       fprintf(stderr, "%s: failed to get terminal settings: %s\n",
               PROGRAM_NAME, strerror(errno));
       abort();
@@ -51,11 +64,13 @@ void teardown(void) {
 
    terminal_settings.c_lflag |= ICANON|ECHO;
 
-   if ( tcsetattr(STDIN_FILENO, TCSANOW, &terminal_settings) == -1 ) {
+   if ( tcsetattr(ctx->fd, TCSANOW, &terminal_settings) == -1 ) {
       fprintf(stderr, "%s: failed to set terminal settings: %s\n",
               PROGRAM_NAME, strerror(errno));
       abort();
    }
+
+   fclose(ctx->file);
 }
 
 enum key {
@@ -207,14 +222,8 @@ int main(int argc, char** argv) {
    char buf[4] = { 0 };
    MENU menu = Menu.new();
    action_fn action = NULL;
-   FILE* display = fopen("/dev/tty", "r+");
-   int display_fd;
-   if (display == NULL) {
-      perror(PROGRAM_NAME ":open:/dev/tty");
-      exit(1);
-   }
+   struct display display;
 
-   display_fd = fileno(display);
 
    Menu.set_prompt(menu, ">>");
    Menu.set_height(menu, 3);
@@ -224,11 +233,12 @@ int main(int argc, char** argv) {
    }
 
    Menu.match(menu);
-   Menu.display(menu, display);
 
-   setup();
+   setup_display(&display);
 
-   while ( read(display_fd, &buf, 8) != 0 ) {
+   Menu.display(menu, display.file);
+
+   while ( read(display.fd, &buf, 8) != 0 ) {
       buf[7] = 0;
       action = KEYMAP[ (unsigned char)buf[0] ];
 
@@ -241,13 +251,12 @@ int main(int argc, char** argv) {
          }
       }
 
-      Menu.display(menu, display);
+      Menu.display(menu, display.file);
       memset(&buf, 0, 8);
    }
 
   exit:
-   teardown();
-   fclose(display);
+   teardown_display(&display);
    Menu.destroy(&menu);
 
    return EXIT_SUCCESS;
