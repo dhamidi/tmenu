@@ -108,5 +108,9 @@ converted to UTF\-8 using
 .BR tmenu
 should handle the arrow keys, the HOME and the END key for navigating
 text.
+
+.BR tmenu
+does not display correctly if items are longer than the terminal is
+wide.  It does not handle \fISIGWINCH\fR.
 .SH AUTHOR
 Dario Hamidi <dario.hamidi@gmail.com>
