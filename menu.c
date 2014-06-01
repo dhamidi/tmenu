@@ -196,9 +196,7 @@ static void displayprompt(MENU self, FILE* out) {
    self->y_offset = 1;
 }
 
-static void displaymatch(MENU self, FILE* out, size_t i) {
-   int selected = i % self->height == self->cursor % self->height;
-
+static void displaymatch(MENU self, FILE* out, size_t i, int selected) {
    Terminal.erase(out, 2); Terminal.col(out, 0);
 
    if (i < self->curmatch) {
@@ -211,9 +209,11 @@ static void displaymatch(MENU self, FILE* out, size_t i) {
 }
 
 static void displaymatches(MENU self, FILE* out) {
-   size_t i, j;
-   for (i = self->cursor / self->height, j = 0; j < self->height; j++) {
-      displaymatch(self, out, i + j);
+   size_t page = self->cursor / self->height;
+   size_t item = self->cursor % self->height;
+   size_t i;
+   for (i = 0; i < self->height; i++) {
+      displaymatch(self, out, (page * self->height) + i, i == item );
       self->y_offset++;
    }
 }
