@@ -12,16 +12,6 @@
 #include "buffer.h"
 #include "menu.h"
 
-static const char* example_items[] = {
-   "hello world",
-   "foo bar",
-   "this is a test",
-   "let's see",
-   "underworld",
-   "overworld",
-   NULL
-};
-
 struct display {
    FILE* file;
    int   fd;
@@ -217,9 +207,26 @@ static action_fn KEYMAP[256] = {
    [KEY_BACKSPACE] = action_delete_char_before,
 };
 
+static int getitem(char* buf, size_t len, FILE* in) {
+   size_t i = 0;
+   int c;
+
+   memset(buf, 0, len);
+
+   for ( c = fgetc(in); c != EOF; c = fgetc(in) ) {
+      if (c == '\n') { break; }
+
+      if ( i < len - 1 ) {
+         buf[i] = c;
+      }
+   }
+
+   return c != EOF;
+}
+
 int main(int argc, char** argv) {
-   const char** item = NULL;
-   char buf[4] = { 0 };
+   char item[MENU_ITEM_MAX_SIZE] = { 0 };
+   char buf[8] = { 0 };
    MENU menu = Menu.new();
    action_fn action = NULL;
    struct display display;
@@ -228,8 +235,8 @@ int main(int argc, char** argv) {
    Menu.set_prompt(menu, ">>");
    Menu.set_height(menu, 3);
 
-   for (item = example_items; *item; item++) {
-      Menu.add_item(menu, *item);
+   while ( getitem(item, MENU_ITEM_MAX_SIZE, stdin) ) {
+      Menu.add_item(menu, item);
    }
 
    Menu.match(menu);
