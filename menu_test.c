@@ -12,6 +12,8 @@ int main(int argc, char** argv) {
    Menu.match(menu);
    Menu.select_next(menu);
    Menu.select_next(menu);
+   Menu.select_next(menu);
+   Menu.select_next(menu);
    Menu.display(menu, stdout);
    Menu.display(menu, stdout);
    Menu.destroy(&menu);

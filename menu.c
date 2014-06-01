@@ -128,7 +128,7 @@ static void menuadditem(MENU self, const char* item) {
 }
 
 static void menuselectnext(MENU self) {
-   if (self->cursor < self->curmatch) {
+   if (self->cursor < self->curmatch - 1) {
       self->cursor++;
    }
 }
