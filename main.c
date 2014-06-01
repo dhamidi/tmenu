@@ -190,6 +190,14 @@ int main(int argc, char** argv) {
    char buf[4] = { 0 };
    MENU menu = Menu.new();
    action_fn action = NULL;
+   FILE* display = fopen("/dev/tty", "r+");
+   int display_fd;
+   if (display == NULL) {
+      perror(PROGRAM_NAME ":open:/dev/tty");
+      exit(1);
+   }
+
+   display_fd = fileno(display);
 
    Menu.set_prompt(menu, ">>");
    Menu.set_height(menu, 3);
@@ -199,11 +207,11 @@ int main(int argc, char** argv) {
    }
 
    Menu.match(menu);
-   Menu.display(menu, stdout);
+   Menu.display(menu, display);
 
    setup();
 
-   while ( read(STDIN_FILENO, &buf, 8) != 0 ) {
+   while ( read(display_fd, &buf, 8) != 0 ) {
       buf[7] = 0;
       action = KEYMAP[ (unsigned char)buf[0] ];
 
@@ -216,13 +224,13 @@ int main(int argc, char** argv) {
          }
       }
 
-      Menu.display(menu, stdout);
+      Menu.display(menu, display);
       memset(&buf, 0, 8);
    }
 
   exit:
    teardown();
-
+   fclose(display);
    Menu.destroy(&menu);
 
    return EXIT_SUCCESS;
