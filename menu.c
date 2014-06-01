@@ -33,6 +33,7 @@ static MENU menunew(void) {
    menu->matches  = must_malloc(sizeof(*menu->matches) * menu->capacity);
    menu->cursor = 0;
    menu->prompt = strdup(MENU_DEFAULT_PROMPT);
+   menu->height  = MENU_DEFAULT_HEIGHT;
 
    menu->matchbuf = NULL;
    menu->matchbuf_len = 0;

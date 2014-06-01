@@ -21,3 +21,7 @@
 #ifndef MENU_DEFAULT_PROMPT
 #define MENU_DEFAULT_PROMPT ">>"
 #endif
+
+#ifndef MENU_DEFAULT_HEIGHT
+#define MENU_DEFAULT_HEIGHT 3
+#endif

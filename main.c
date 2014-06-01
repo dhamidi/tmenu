@@ -217,7 +217,7 @@ static int getitem(char* buf, size_t len, FILE* in) {
       if (c == '\n') { break; }
 
       if ( i < len - 1 ) {
-         buf[i] = c;
+         buf[i++] = c;
       }
    }
 
@@ -230,10 +230,21 @@ int main(int argc, char** argv) {
    MENU menu = Menu.new();
    action_fn action = NULL;
    struct display display;
+   int opt;
 
-
-   Menu.set_prompt(menu, ">>");
-   Menu.set_height(menu, 3);
+   while ( (opt = getopt(argc, argv, "p:l:")) != -1 ) {
+      switch (opt) {
+         case 'p':
+            Menu.set_prompt(menu, optarg);
+            break;
+         case 'l':
+            Menu.set_height(menu, atoi(optarg));
+            break;
+         default:
+            fprintf(stderr, "%s: unknown option '%c'\n", argv[0], opt);
+            exit(EXIT_FAILURE);
+      }
+   }
 
    while ( getitem(item, MENU_ITEM_MAX_SIZE, stdin) ) {
       Menu.add_item(menu, item);
