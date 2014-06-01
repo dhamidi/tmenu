@@ -61,13 +61,30 @@ void teardown(void) {
 enum key {
    KEY_CTRL_A = 0x1,
    KEY_CTRL_B = 0x2,
+   KEY_CTRL_C = 0x3,
    KEY_CTRL_D = 0x4,
    KEY_CTRL_E = 0x5,
    KEY_CTRL_F = 0x6,
+   KEY_CTRL_G = 0x7,
+   KEY_CTRL_H = 0x8,
+   KEY_CTRL_I = 0x9,
+   KEY_CTRL_J = 0xa,
    KEY_CTRL_K = 0xb,
-   KEY_CTRL_U = 0x15,
-   KEY_CTRL_P = 0x10,
+   KEY_CTRL_L = 0xc,
+   KEY_CTRL_M = 0xd,
    KEY_CTRL_N = 0xe,
+   KEY_CTRL_O = 0xf,
+   KEY_CTRL_P = 0x10,
+   KEY_CTRL_Q = 0x11,
+   KEY_CTRL_R = 0x12,
+   KEY_CTRL_S = 0x13,
+   KEY_CTRL_T = 0x14,
+   KEY_CTRL_U = 0x15,
+   KEY_CTRL_V = 0x16,
+   KEY_CTRL_X = 0x17,
+   KEY_CTRL_Y = 0x18,
+   KEY_CTRL_Z = 0x19,
+   KEY_SPACE  = 0x20,
    KEY_ENTER  = 0xa,
    KEY_BACKSPACE = 0x7f,
 };
@@ -215,7 +232,7 @@ int main(int argc, char** argv) {
       buf[7] = 0;
       action = KEYMAP[ (unsigned char)buf[0] ];
 
-      if (!action) {
+      if (!action && (unsigned char)buf[0] >= KEY_SPACE) {
          Buffer.sput(Menu.buffer(menu), buf);
          Menu.match(menu);
       } else {
