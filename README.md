@@ -23,6 +23,11 @@ install tmenu to a different location, set `PREFIX`:
 
     make install PREFIX=$HOME/local
 
+If you want to change compilation and linking flags, modify
+[script/compile](script/compile) and [script/link](script/link).  Having
+the options in separate files causes `make` to recompile the program if
+options change.
+
 # License
 
 Copyright 2014 Dario Hamidi
