@@ -63,8 +63,20 @@ static void menudestroy(MENU* self) {
    *self = NULL;
 }
 
+static void prepare_matches(MENU self) {
+   memset(self->matches, 0, sizeof(*self->matches) * self->len);
+   Buffer.string(self->input, &self->matchbuf, &self->matchbuf_len);
+   self->curmatch = 0;
+   self->cursor = 0;
+}
+
 static const char* menuselection(MENU self) {
-   return self->items[self->matches[self->cursor]];
+   if (self->len > 0) {
+      return self->items[self->matches[self->cursor]];
+   } else {
+      prepare_matches(self);
+      return self->matchbuf;
+   }
 }
 
 static void menusetprompt(MENU self, const char* prompt) {
@@ -139,12 +151,6 @@ static void menuselectprev(MENU self) {
    }
 }
 
-static void prepare_matches(MENU self) {
-   memset(self->matches, 0, sizeof(*self->matches) * self->len);
-   self->curmatch = 0;
-   self->cursor = 0;
-}
-
 static void addmatch(MENU self, size_t index) {
    self->matches[self->curmatch++] = index;
 }
@@ -154,7 +160,6 @@ static void menumatch(MENU self) {
 
    prepare_matches(self);
 
-   Buffer.string(self->input, &self->matchbuf, &self->matchbuf_len);
    for (i = 0; i < self->len; i++) {
       if ( strstr(self->items[i], self->matchbuf) != NULL ) {
          addmatch(self, i);
@@ -227,8 +232,11 @@ static void displayposition(MENU self, FILE* out) {
 
 static void menudisplay(MENU self, FILE* out) {
    displayprompt(self, out);
-   displaymatches(self, out);
-   displayposition(self, out);
+
+   if (self->len > 0) {
+      displaymatches(self, out);
+      displayposition(self, out);
+   }
 }
 
 struct menu_interface Menu = {
