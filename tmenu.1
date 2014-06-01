@@ -1,0 +1,112 @@
+.\" Copyright (C), 2014  Dario Hamidi
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.\"
+.\" See http://liw.fi/manpages/ for how to edit this file.
+.TH tmenu 1 2014-06-02
+.SH NAME
+tmenu \- tty menu
+.SH SYNOPSIS
+.B tmenu
+[\fB\-l\fR LINES]
+[\fB\-p\fR PROMPT]
+.SH DESCRIPTION
+.B tmenu
+is a dynamic menu for tty devices, which reads a list of
+newline\-separated items from stdin.  When the user selects an item and
+presses Return, the selected item is printed to stdout.  Entering text
+will narrow the list of items to items that contain the entered text.
+.SH OPTIONS
+.TP
+.BR \-l " " \fILINES\fR
+Set the height of the completion list in lines to \fILINES\fR.  Defaults
+to 3.
+.TP
+.BR \-p " " \fIPROMPT\fR
+Set the prompt shown to the user to \fIPROMPT\fR.  Defaults to \fI>>\fR.
+.SH KEY BINDINGS
+.B tmenu
+uses the following key bindings for editing the text the user entered
+and manipulating the selection:
+.TP
+.BR Return ", " C\-j
+Output the currently selected item on stdout and exit.
+.TP
+.BR C\-n
+Select the next item in the list.
+.TP
+.BR C\-p
+Select the previous item in the list.
+.TP
+.BR C\-a
+Move the cursor to the beginning of the line.
+.TP
+.BR C\-e
+Move the cursor to the end of the line.
+.TP
+.BR C\-u
+Delete text until the beginning of the line.
+.TP
+.BR C\-k
+Delete text until the end of the line.
+.TP
+.BR C\-d
+Delete the character under the cursor.
+.TP
+.BR Backspace
+Delete the character before the cursor.
+.TP
+.BR C\-f
+Move the cursor forward by one character.
+.TP
+.BR C\-b
+Move the cursor backward by one character.
+.SH FILES
+.TP
+.IR /dev/tty
+.BR tmenu
+opens \fI/dev/tty\fR for displaying the menu to the user and reads user
+input from this file.  Using \fIstdout\fR for display would make it
+impossible to use tmenu in pipes.
+.SH EXAMPLES
+.BR tmenu
+is most useful when used together with other programs.  Here are some
+examples of possible uses:
+.TP
+.BR "Switching jobs in the shell"
+.nf
+.RS
+
+fg %$(jobs | tmenu | awk '{print substr($1,2,1)}')
+.RE
+.fi
+.TP
+.BR "Find a file in a git repository"
+.nf
+.RS
+
+$EDITOR "$(git ls-files | tmenu)"
+.RE
+.fi
+.TP
+.BR "Jump to favourite directory"
+.nf
+.RS
+
+cd "$(tmenu < ~/.bookmarks)"
+.RE
+.fi
+.SH "SEE ALSO"
+.BR dmenu (1)
+.SH BUGS
+.BR tmenu
+expects input to be encoded as UTF\-8. It will behave unexpectedly
+if any other encoding is used.  In the future, user input will be
+converted to UTF\-8 using
+.BR iconv (3).
+
+.BR tmenu
+should handle the arrow keys, the HOME and the END key for navigating
+text.
+.SH AUTHOR
+Dario Hamidi <dario.hamidi@gmail.com>
