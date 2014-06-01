@@ -19,9 +19,6 @@ static const char* example_items[] = {
    "let's see",
    "underworld",
    "overworld",
-   "спасибо",
-   "дробрый день",
-   "да",
    NULL
 };
 
@@ -206,7 +203,8 @@ int main(int argc, char** argv) {
 
    setup();
 
-   while ( read(STDIN_FILENO, &buf, 4) != 0 ) {
+   while ( read(STDIN_FILENO, &buf, 8) != 0 ) {
+      buf[7] = 0;
       action = KEYMAP[ (unsigned char)buf[0] ];
 
       if (!action) {
@@ -219,7 +217,7 @@ int main(int argc, char** argv) {
       }
 
       Menu.display(menu, stdout);
-      memset(&buf, 0, 4);
+      memset(&buf, 0, 8);
    }
 
   exit:
