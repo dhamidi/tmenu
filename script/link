@@ -1,3 +1,3 @@
 #!/bin/sh
 TARGET=$1; shift
-gcc -o $TARGET "$@"
+cc -static -o $TARGET "$@"

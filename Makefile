@@ -6,6 +6,9 @@
 tmenu: main.o terminal.o buffer.o menu.o util.o
 	script/link $@ main.o terminal.o buffer.o menu.o util.o
 
+run: tmenu
+	./tmenu
+
 main.o: main.c script/compile config.h terminal.h buffer.h menu.h
 
 terminal.o: terminal.c terminal.h script/compile
