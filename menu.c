@@ -142,6 +142,7 @@ static void menuselectprev(MENU self) {
 static void prepare_matches(MENU self) {
    memset(self->matches, 0, sizeof(*self->matches) * self->len);
    self->curmatch = 0;
+   self->cursor = 0;
 }
 
 static void addmatch(MENU self, size_t index) {
