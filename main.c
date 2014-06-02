@@ -42,6 +42,9 @@ void setup_display(struct display * ctx) {
       abort();
    }
 
+   // make sure we are not clobbering the user's prompt
+   fputs("\n", ctx->file);
+
    ctx->fd = fileno(ctx->file);
 
    if ( tcgetattr(ctx->fd, &terminal_settings) == -1 ) {
