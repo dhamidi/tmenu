@@ -53,7 +53,7 @@ static MENU menunew(void) {
 
    menu->matchbuf = NULL;
    menu->matchbuf_len = 0;
-   menu->input = Buffer.new(0);
+   menu->input = TextBuffer.new(0);
 
    return menu;
 }
@@ -69,7 +69,7 @@ static void menudestroy(MENU* self) {
       free( (*self)->items[i] );
    }
 
-   Buffer.destroy( & (*self)->input );
+   TextBuffer.destroy( & (*self)->input );
 
    free( (*self)->items );
    free( (*self)->matches );
@@ -82,7 +82,7 @@ static void menudestroy(MENU* self) {
 
 static void prepare_matches(MENU self) {
    memset(self->matches, 0, sizeof(*self->matches) * self->len);
-   Buffer.string(self->input, &self->matchbuf, &self->matchbuf_len);
+   TextBuffer.string(self->input, &self->matchbuf, &self->matchbuf_len);
    self->curmatch = 0;
    self->cursor = 0;
 }
@@ -189,14 +189,14 @@ static BUFFER menubuffer(MENU self) {
 }
 
 static void displayprompt(MENU self, FILE* out) {
-   const char* inputpos = Buffer.after(self->input);
+   const char* inputpos = TextBuffer.after(self->input);
    size_t utf8bytes = 1;
 
    Terminal.up(out, self->y_offset);
    Terminal.erase(out, 2);      /* whole line */
    Terminal.col(out, 0);
 
-   fprintf(out, "%s %s", self->prompt, Buffer.before(self->input));
+   fprintf(out, "%s %s", self->prompt, TextBuffer.before(self->input));
 
    Terminal.highlight(out, 1);
    if ( inputpos[0] ) {

@@ -126,84 +126,56 @@ static int action_select_prev(MENU menu) {
 }
 
 static int action_forward(MENU menu) {
-   BUFFER buf = Menu.buffer(menu);
-   const char* after = Buffer.after(buf);
-
-   Buffer.forward(buf, 1);
-   while ( (unsigned char)*(++after) >> 6 == 2)
-      Buffer.forward(buf, 1);
-
+   TextBuffer.forward(Menu.buffer(menu), 1);
    return 1;
 }
 
 static int action_backward(MENU menu) {
-   BUFFER buf = Menu.buffer(menu);
-   const char* before = Buffer.before(buf);
-   size_t before_len = Buffer.point(buf) - 1;
-   size_t pos = before_len - 1;
-
-   if ( (unsigned char)before[pos] <= 0x70) {
-      // ASCII
-      Buffer.backward(buf, 1);
-   } else {
-      // UTF-8
-      while ( (unsigned char)before[pos] >> 6 == 2) {
-         pos--;
-      }
-      Buffer.backward(buf, before_len - pos);
-   }
-
-
+   TextBuffer.backward(Menu.buffer(menu), 1);
    return 1;
 }
 
 static int action_delete_char(MENU menu) {
-   BUFFER buf = Menu.buffer(menu);
-   const char* after = Buffer.after(buf);
-
-   Buffer.delete(buf);
-   while ( (unsigned char)*(++after) >> 6 == 2 )
-      Buffer.delete(buf);
-
+   TextBuffer.delete(Menu.buffer(menu));
    Menu.match(menu);
    return 1;
 }
 
 static int action_delete_char_before(MENU menu) {
    BUFFER buf = Menu.buffer(menu);
-   size_t point_before = Buffer.point(buf);
+   size_t point_before = TextBuffer.point(buf);
    size_t point_after = point_before;
 
    action_backward(menu);
 
-   point_after = Buffer.point(buf);
+   point_after = TextBuffer.point(buf);
 
    while ( point_after++ < point_before )
-      Buffer.delete(Menu.buffer(menu));
+      TextBuffer.delete(Menu.buffer(menu));
 
    Menu.match(menu);
    return 1;
 }
 
 static int action_delete_to_beginning(MENU menu) {
-   Buffer.delete_to_beginning(Menu.buffer(menu));
+   TextBuffer.delete_to_beginning(Menu.buffer(menu));
    Menu.match(menu);
    return 1;
 }
 
 static int action_delete_to_end(MENU menu) {
-   Buffer.delete_to_end(Menu.buffer(menu));
+   TextBuffer.delete_to_end(Menu.buffer(menu));
    Menu.match(menu);
    return 1;
 }
 
 static int action_beginning_of_line(MENU menu) {
-   Buffer.backward(Menu.buffer(menu), 10000);
+   TextBuffer.backward(Menu.buffer(menu), 10000);
    return 1;
 }
 
 static int action_end_of_line(MENU menu) {
-   Buffer.forward(Menu.buffer(menu), 10000);
+   TextBuffer.forward(Menu.buffer(menu), 10000);
    return 1;
 }
 
@@ -280,7 +252,7 @@ int main(int argc, char** argv) {
       action = KEYMAP[ (unsigned char)buf[0] ];
 
       if (!action && (unsigned char)buf[0] >= KEY_SPACE) {
-         Buffer.sput(Menu.buffer(menu), buf);
+         TextBuffer.sput(Menu.buffer(menu), buf);
          Menu.match(menu);
       } else {
          if (action && ! action(menu) ) {
