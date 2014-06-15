@@ -28,6 +28,11 @@ If you want to change compilation and linking flags, modify
 the options in separate files causes `make` to recompile the program if
 options change.
 
+# Options
+
+- `-l LINES`: Set the height of the completion list in lines to LINES.  Defaults to 3.
+- `-p PROMPT`: Set the prompt shown to the user to PROMPT.  Defaults to `>>`.
+
 # Key Bindings
 
 - `Return`, `C-j`: Output the currently selected item on stdout and exit.

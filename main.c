@@ -232,7 +232,6 @@ int main(int argc, char** argv) {
             Menu.set_height(menu, atoi(optarg));
             break;
          default:
-            fprintf(stderr, "%s: unknown option '%c'\n", argv[0], opt);
             exit(EXIT_FAILURE);
       }
    }
