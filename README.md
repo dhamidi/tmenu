@@ -54,7 +54,7 @@ options change.
 Add an git alias with the following command to switch git branches using
 `tmenu`:
 
-    git alias br "!git ls-remote -h . | awk '{print $NF}' | tmenu | xargs git checkout"
+    git alias br "!git ls-remote -h . | awk '{print(substr($NF, 12))}' | tmenu | xargs git checkout"
 
 Then use `git br` to interactively switch the git branch.
 
