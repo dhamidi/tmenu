@@ -37,22 +37,22 @@ install: tmenu test
 run: tmenu
 	./tmenu
 
-main.o: main.c script/compile config.h terminal.h textbuffer.h buffer.h menu.h
+main.o: main.c config.h terminal.h textbuffer.h buffer.h menu.h
 
-terminal.o: terminal.c terminal.h script/compile
+terminal.o: terminal.c terminal.h
 
-util.o: util.h util.c script/compile
+util.o: util.h util.c
 
 textbuffer.o: textbuffer.h textbuffer.c buffer.h buffer.c
 
-buffer.o: util.o config.h script/compile buffer.h buffer.c
+buffer.o: util.o config.h buffer.h buffer.c
 
-buffer_test: buffer_test.o buffer.o util.o script/link
+buffer_test: buffer_test.o buffer.o util.o
 	$(CC) -o $@ buffer_test.o buffer.o util.o
 
-menu.o: util.o config.h textbuffer.o buffer.o script/compile menu.h menu.c
+menu.o: util.o config.h textbuffer.o buffer.o menu.h menu.c
 
-menu_test: menu_test.o textbuffer.o buffer.o util.o menu.o terminal.o script/link
+menu_test: menu_test.o textbuffer.o buffer.o util.o menu.o terminal.o
 	$(CC) -o $@ menu_test.o textbuffer.o buffer.o util.o menu.o terminal.o
 
 test: script/test buffer_test menu_test
