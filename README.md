@@ -32,6 +32,8 @@ options change.
 
 - `-l LINES`: Set the height of the completion list in lines to LINES.  Defaults to 3.
 - `-p PROMPT`: Set the prompt shown to the user to PROMPT.  Defaults to `>>`.
+- `-q`: Be quiet. When quiet, no status line is displayed.  Defaults to
+  showing the status line.
 
 # Key Bindings
 
