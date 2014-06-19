@@ -240,20 +240,11 @@ static void displaymatches(MENU self, FILE* out) {
    }
 }
 
-static void displayposition(MENU self, FILE* out) {
-   Terminal.erase(out, 2); Terminal.col(out, 0);
-   fprintf(out,"[%ld/%ld match(es)]\n",
-           (long int)self->cursor + 1, (long int)self->curmatch);
-   self->y_offset++;
-}
-
 static void menudisplay(MENU self, FILE* out) {
    displayprompt(self, out);
 
-   if (self->len > 0) {
+   if (self->len > 0)
       displaymatches(self, out);
-      displayposition(self, out);
-   }
 }
 
 struct menu_interface Menu = {
