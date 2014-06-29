@@ -28,60 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "buffer.h"
 #include "menu.h"
 
-struct display {
-   FILE* file;
-   int   fd;
-};
-
-void setup_display(struct display * ctx) {
-   struct termios terminal_settings = { 0 };
-
-   ctx->file = fopen("/dev/tty", "r+");
-   if (ctx->file == NULL) {
-      perror(PROGRAM_NAME ":open:/dev/tty");
-      abort();
-   }
-
-   // make sure we are not clobbering the user's prompt
-   fputs("\n", ctx->file);
-
-   ctx->fd = fileno(ctx->file);
-
-   if ( tcgetattr(ctx->fd, &terminal_settings) == -1 ) {
-      fprintf(stderr, "%s: failed to get terminal settings: %s\n",
-              PROGRAM_NAME, strerror(errno));
-      abort();
-   }
-
-   terminal_settings.c_lflag &= ~(ICANON|ECHO);
-
-   if ( tcsetattr(ctx->fd, TCSANOW, &terminal_settings) == -1 ) {
-      fprintf(stderr, "%s: failed to set terminal settings: %s\n",
-              PROGRAM_NAME, strerror(errno));
-      abort();
-   }
-}
-
-void teardown_display(struct display * ctx) {
-   struct termios terminal_settings = { 0 };
-
-   if ( tcgetattr(ctx->fd, &terminal_settings) == -1 ) {
-      fprintf(stderr, "%s: failed to get terminal settings: %s\n",
-              PROGRAM_NAME, strerror(errno));
-      abort();
-   }
-
-   terminal_settings.c_lflag |= ICANON|ECHO;
-
-   if ( tcsetattr(ctx->fd, TCSANOW, &terminal_settings) == -1 ) {
-      fprintf(stderr, "%s: failed to set terminal settings: %s\n",
-              PROGRAM_NAME, strerror(errno));
-      abort();
-   }
-
-   fclose(ctx->file);
-}
-
 enum key {
    KEY_CTRL_A = 0x1,
    KEY_CTRL_B = 0x2,
@@ -218,10 +164,13 @@ static int getitem(char* buf, size_t len, FILE* in) {
 int main(int argc, char** argv) {
    char item[MENU_ITEM_MAX_SIZE] = { 0 };
    char buf[8] = { 0 };
-   MENU menu = Menu.new();
    action_fn action = NULL;
-   struct display display;
-   int opt;
+   int opt, fd_in;
+
+   TERMINAL term = Terminal.new("/dev/tty");
+   MENU menu = Menu.new();
+
+   fd_in = Terminal.fd(term);
 
    while ( (opt = getopt(argc, argv, "p:l:")) != -1 ) {
       switch (opt) {
@@ -240,13 +189,18 @@ int main(int argc, char** argv) {
       Menu.add_item(menu, item);
    }
 
+   if (Terminal.interactive_mode(term) != TERMINAL_OK) {
+      goto exit;
+   }
+
    Menu.match(menu);
 
-   setup_display(&display);
+   /* avoid clobbering the user's prompt */
+   fputs("\n", Terminal.file(term));
 
-   Menu.display(menu, display.file);
+   Menu.display(menu, term);
 
-   while ( read(display.fd, &buf, 8) != 0 ) {
+   while ( read(fd_in, &buf, 8) != 0 ) {
       buf[7] = 0;
       action = KEYMAP[ (unsigned char)buf[0] ];
 
@@ -259,12 +213,12 @@ int main(int argc, char** argv) {
          }
       }
 
-      Menu.display(menu, display.file);
+      Menu.display(menu, term);
       memset(&buf, 0, 8);
    }
 
   exit:
-   teardown_display(&display);
+   Terminal.destroy(&term);
    Menu.destroy(&menu);
 
    return EXIT_SUCCESS;

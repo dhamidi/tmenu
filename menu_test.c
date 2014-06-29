@@ -15,8 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "menu.h"
+#include "terminal.h"
 
 int main(int argc, char** argv) {
+   TERMINAL term = Terminal.new("/dev/stdout");
    MENU menu = Menu.new();
    Menu.set_prompt(menu, "choose:");
    Menu.set_height(menu, 2);
@@ -30,8 +32,8 @@ int main(int argc, char** argv) {
    Menu.select_next(menu);
    Menu.select_next(menu);
    Menu.select_next(menu);
-   Menu.display(menu, stdout);
-   Menu.display(menu, stdout);
+   Menu.display(menu, term);
+   Menu.display(menu, term);
    Menu.destroy(&menu);
    return 0;
 }

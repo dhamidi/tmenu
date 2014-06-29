@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
 #include "textbuffer.h"
+#include "terminal.h"
 
 typedef struct menu * MENU;
 
@@ -33,7 +34,7 @@ extern struct menu_interface {
    void    (*select_next)(MENU);
    void    (*select_prev)(MENU);
    const char* (*selection)(MENU);
-   void    (*display)(MENU, FILE*);
+   void    (*display)(MENU, TERMINAL);
    void    (*match)(MENU);
    BUFFER  (*buffer)(MENU);
 } Menu;

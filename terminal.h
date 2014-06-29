@@ -20,14 +20,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
 
+typedef struct terminal * TERMINAL;
+
+enum terminal_error {
+   TERMINAL_OK = 0,
+   TERMINAL_GET_ATTR_FAIL,
+   TERMINAL_SET_ATTR_FAIL,
+   TERMINAL_UNKNOWN_MODE,
+};
+typedef enum terminal_error TERMINAL_ERROR;
+
 extern struct terminal_interface {
-   void (*left)(FILE*, int);
-   void (*right)(FILE*, int);
-   void (*up)(FILE*, int);
-   void (*down)(FILE*, int);
-   void (*erase)(FILE*, int);
-   void (*col)(FILE*, int);
-   void (*highlight)(FILE*,int);
+   TERMINAL (*new)(const char*);
+   void (*destroy)(TERMINAL*);
+
+   TERMINAL_ERROR (*interactive_mode)(TERMINAL);
+   TERMINAL_ERROR (*standard_mode)(TERMINAL);
+
+   void (*left)(TERMINAL, int);
+   void (*right)(TERMINAL, int);
+   void (*up)(TERMINAL, int);
+   void (*down)(TERMINAL, int);
+   void (*erase)(TERMINAL, int);
+   void (*col)(TERMINAL, int);
+   void (*highlight)(TERMINAL,int);
+   FILE* (*file)(TERMINAL);
+   int  (*fd)(TERMINAL);
 } Terminal;
 
 #endif

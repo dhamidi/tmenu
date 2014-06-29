@@ -16,6 +16,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "terminal.h"
 
+#include <termios.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "config.h"
+#include "util.h"
+
+struct terminal {
+   FILE* file;
+   int   fd;
+};
+
 static const char* dirs[] = {
    "\033[%dA",
    "\033[%dB",
@@ -30,45 +44,126 @@ enum TERMINAL_DIR {
    TERMINAL_DIR_LEFT,
 };
 
-static void mov(FILE* out, enum TERMINAL_DIR dir, int arg) {
-   fprintf(out, dirs[dir], arg);
+enum TERMINAL_MODE {
+   TERMINAL_MODE_INTERACTIVE,
+   TERMINAL_MODE_STANDARD,
+};
+
+
+static TERMINAL termnew(const char* filename) {
+   TERMINAL term = must_malloc(sizeof(*term));
+   int err = 0;
+
+   term->file = fopen(filename, "r+");
+   err = errno;
+   if (term->file == NULL) {
+      fprintf(stderr, "%s:open:%s: %s\n", PROGRAM_NAME, filename, strerror(err));
+      abort();
+   }
+
+   term->fd = fileno(term->file);
+
+
+   return term;
 }
 
-static void up(FILE* out, int arg) {
-   mov(out, TERMINAL_DIR_UP, arg);
+static TERMINAL_ERROR termsetmode(TERMINAL self, enum TERMINAL_MODE mode) {
+   struct termios terminal_settings = { 0 };
+
+   if ( tcgetattr(self->fd, &terminal_settings) == -1 ) {
+      fprintf(stderr, "%s: failed to get terminal settings: %s\n",
+              PROGRAM_NAME, strerror(errno));
+      return TERMINAL_GET_ATTR_FAIL;
+   }
+
+   switch (mode) {
+      case TERMINAL_MODE_INTERACTIVE:
+         terminal_settings.c_lflag &= ~(ICANON|ECHO);
+         break;
+      case TERMINAL_MODE_STANDARD:
+         terminal_settings.c_lflag |= ICANON|ECHO;
+         break;
+      default:
+         fprintf(stderr, "%s: unknown terminal mode: %X\n",
+                 PROGRAM_NAME, (int)mode);
+         return TERMINAL_UNKNOWN_MODE;
+   }
+
+   if ( tcsetattr(self->fd, TCSANOW, &terminal_settings) == -1 ) {
+      fprintf(stderr, "%s: failed to set terminal settings: %s\n",
+              PROGRAM_NAME, strerror(errno));
+      return TERMINAL_SET_ATTR_FAIL;
+   }
+
+   return TERMINAL_OK;
 }
 
-static void down(FILE* out, int arg) {
-   mov(out, TERMINAL_DIR_DOWN, arg);
+static TERMINAL_ERROR terminteractivemode(TERMINAL self) {
+   return termsetmode(self, TERMINAL_MODE_INTERACTIVE);
 }
 
-static void right(FILE* out, int arg) {
-   mov(out, TERMINAL_DIR_RIGHT, arg);
+static TERMINAL_ERROR termstandardmode(TERMINAL self) {
+   return termsetmode(self, TERMINAL_MODE_STANDARD);
 }
 
-static void left(FILE* out, int arg) {
-   mov(out, TERMINAL_DIR_LEFT, arg);
+static void termdestroy(TERMINAL* self) {
+   TERMINAL term = *self;
+   termsetmode(term, TERMINAL_MODE_STANDARD);
+   fclose(term->file);
+   free(term);
+   *self = NULL;
 }
 
-static void erase(FILE* out, int arg) {
+static void mov(TERMINAL self, enum TERMINAL_DIR dir, int arg) {
+   fprintf(self->file, dirs[dir], arg);
+}
+
+static void up(TERMINAL self, int arg) {
+   mov(self, TERMINAL_DIR_UP, arg);
+}
+
+static void down(TERMINAL self, int arg) {
+   mov(self, TERMINAL_DIR_DOWN, arg);
+}
+
+static void right(TERMINAL self, int arg) {
+   mov(self, TERMINAL_DIR_RIGHT, arg);
+}
+
+static void left(TERMINAL self, int arg) {
+   mov(self, TERMINAL_DIR_LEFT, arg);
+}
+
+static void erase(TERMINAL self, int arg) {
    if (arg >= 2) {
-      fprintf(out, "\033[%dK", 2);
+      fprintf(self->file, "\033[%dK", 2);
    } else if (arg <= 0) {
-      fprintf(out, "\033[%dK", 0);
+      fprintf(self->file, "\033[%dK", 0);
    } else {
-      fprintf(out, "\033[%dK", 1);
+      fprintf(self->file, "\033[%dK", 1);
    }
 }
 
-static void col(FILE* out, int x) {
-   fprintf(out, "\033[%dG", x);
+static void col(TERMINAL self, int x) {
+   fprintf(self->file, "\033[%dG", x);
 }
 
-static void highlight(FILE* out, int on) {
-   fprintf(out, "\033[%dm", on ? 7 : 0);
+static void highlight(TERMINAL self, int on) {
+   fprintf(self->file, "\033[%dm", on ? 7 : 0);
+}
+
+static int termfd(TERMINAL self) {
+   return self->fd;
+}
+
+static FILE* termfile(TERMINAL self) {
+   return self->file;
 }
 
 struct terminal_interface Terminal = {
+   .new = termnew,
+   .destroy = termdestroy,
+
    .left = left,
    .right = right,
    .up = up,
@@ -76,4 +171,10 @@ struct terminal_interface Terminal = {
    .erase = erase,
    .col = col,
    .highlight = highlight,
+
+   .file = termfile,
+   .fd = termfd,
+
+   .interactive_mode = terminteractivemode,
+   .standard_mode = termstandardmode,
 };

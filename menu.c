@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "util.h"
 #include "config.h"
-#include "terminal.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,17 +187,18 @@ static BUFFER menubuffer(MENU self) {
    return self->input;
 }
 
-static void displayprompt(MENU self, FILE* out) {
+static void displayprompt(MENU self, TERMINAL term) {
    const char* inputpos = TextBuffer.after(self->input);
    size_t utf8bytes = 1;
+   FILE* out = Terminal.file(term);
 
-   Terminal.up(out, self->y_offset);
-   Terminal.erase(out, 2);      /* whole line */
-   Terminal.col(out, 0);
+   Terminal.up(term, self->y_offset);
+   Terminal.erase(term, 2);      /* whole line */
+   Terminal.col(term, 0);
 
    fprintf(out, "%s %s", self->prompt, TextBuffer.before(self->input));
 
-   Terminal.highlight(out, 1);
+   Terminal.highlight(term, 1);
    if ( inputpos[0] ) {
       fprintf(out, "%c", inputpos[0]);
       if ( (unsigned char)inputpos[0] > 0x70 ) {
@@ -211,48 +211,51 @@ static void displayprompt(MENU self, FILE* out) {
    } else {
       fprintf(out, " ");
    }
-   Terminal.highlight(out, 0);
+   Terminal.highlight(term, 0);
 
    fprintf(out, "%s\n", inputpos + utf8bytes);
 
    self->y_offset = 1;
 }
 
-static void displaymatch(MENU self, FILE* out, size_t i, int selected) {
-   Terminal.erase(out, 2); Terminal.col(out, 0);
+static void displaymatch(MENU self, TERMINAL term, size_t i, int selected) {
+   FILE* out = Terminal.file(term);
+   Terminal.erase(term, 2); Terminal.col(term, 0);
 
    if (i < self->curmatch) {
-      if (selected) Terminal.highlight(out, 1);
+      if (selected) Terminal.highlight(term, 1);
       fprintf(out,"%s\n", self->items[self->matches[i]]);
-      if (selected) Terminal.highlight(out, 0);
+      if (selected) Terminal.highlight(term, 0);
    } else {
       fprintf(out,"\n");
    }
 }
 
-static void displaymatches(MENU self, FILE* out) {
+static void displaymatches(MENU self, TERMINAL term) {
    size_t page = self->cursor / self->height;
    size_t item = self->cursor % self->height;
    size_t i;
    for (i = 0; i < self->height; i++) {
-      displaymatch(self, out, (page * self->height) + i, i == item );
+      displaymatch(self, term, (page * self->height) + i, i == item );
       self->y_offset++;
    }
 }
 
-static void displayposition(MENU self, FILE* out) {
-   Terminal.erase(out, 2); Terminal.col(out, 0);
+static void displayposition(MENU self, TERMINAL term) {
+   FILE* out = Terminal.file(term);
+
+   Terminal.erase(term, 2); Terminal.col(term, 0);
    fprintf(out,"[%ld/%ld match(es)]\n",
            (long int)self->cursor + 1, (long int)self->curmatch);
    self->y_offset++;
 }
 
-static void menudisplay(MENU self, FILE* out) {
-   displayprompt(self, out);
+static void menudisplay(MENU self, TERMINAL term) {
+   displayprompt(self, term);
 
    if (self->len > 0) {
-      displaymatches(self, out);
-      displayposition(self, out);
+      displaymatches(self, term);
+      displayposition(self, term);
    }
 }
 
