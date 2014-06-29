@@ -170,10 +170,14 @@ static void bufdeletetobeginning(BUFFER self) {
    self->gapstart = 1;
 }
 
+static size_t buflen(BUFFER self) {
+   return self->capacity - (self->gapend - self->gapstart);
+}
+
 struct buffer_interface Buffer = {
    .new = bufnew,
    .destroy = bufdestroy,
-
+   .length = buflen,
    .cput = bufcput,
    .sput = bufsput,
    .string = bufstring,

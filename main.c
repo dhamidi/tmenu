@@ -172,12 +172,13 @@ static void update_current_menu_size(int signum) {
    int fd = Terminal.fd(CURRENT_TERMINAL);
 
    if (ioctl(fd, TIOCGWINSZ, &winsize) == -1) {
-      perror(PROGRAM_NAME ":handle_winch:ioctl");
+      perror(PROGRAM_NAME ":update_current_menu_size:ioctl");
       return;
    }
 
    Menu.set_max_height(CURRENT_MENU, winsize.ws_row);
    Menu.set_max_width(CURRENT_MENU, winsize.ws_col);
+   Menu.display(CURRENT_MENU, CURRENT_TERMINAL);
 }
 
 static void initsignals(struct sigaction *act ) {
