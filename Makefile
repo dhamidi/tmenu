@@ -48,12 +48,8 @@ buffer_test: buffer_test.o buffer.o util.o script/link
 
 menu.o: util.o config.h textbuffer.o buffer.o script/compile menu.h menu.c
 
-menu_test: menu_test.o textbuffer.o buffer.o util.o menu.o terminal.o script/link
-	script/link $@ menu_test.o textbuffer.o buffer.o util.o menu.o terminal.o
-
-test: script/test buffer_test menu_test
+test: script/test buffer_test
 	script/test buffer_test
-	script/test menu_test
 
 clean:
 	rm -vf  tmenu
