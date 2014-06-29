@@ -41,3 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MENU_DEFAULT_HEIGHT
 #define MENU_DEFAULT_HEIGHT 3
 #endif
+
+#ifndef MENU_DEFAULT_STATUS_LINE
+#define MENU_DEFAULT_STATUS_LINE 1
+#endif

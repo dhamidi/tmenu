@@ -36,6 +36,7 @@ struct menu {
    char*   matchbuf;
    size_t  matchbuf_len;
    BUFFER  input;
+   int     status_line_enabled;
 };
 
 static MENU menunew(void) {
@@ -53,6 +54,8 @@ static MENU menunew(void) {
    menu->matchbuf = NULL;
    menu->matchbuf_len = 0;
    menu->input = TextBuffer.new(0);
+
+   menu->status_line_enabled = MENU_DEFAULT_STATUS_LINE;
 
    return menu;
 }
@@ -244,10 +247,12 @@ static void displaymatches(MENU self, TERMINAL term) {
 static void displayposition(MENU self, TERMINAL term) {
    FILE* out = Terminal.file(term);
 
-   Terminal.erase(term, 2); Terminal.col(term, 0);
-   fprintf(out,"[%ld/%ld match(es)]\n",
-           (long int)self->cursor + 1, (long int)self->curmatch);
-   self->y_offset++;
+   if (self->status_line_enabled) {
+      Terminal.erase(term, 2); Terminal.col(term, 0);
+      fprintf(out,"[%ld/%ld match(es)]\n",
+              (long int)self->cursor + 1, (long int)self->curmatch);
+      self->y_offset++;
+   }
 }
 
 static void menudisplay(MENU self, TERMINAL term) {
@@ -259,6 +264,10 @@ static void menudisplay(MENU self, TERMINAL term) {
    }
 }
 
+static void menuenablestatusline(MENU self, int enabled) {
+   self->status_line_enabled = enabled;
+}
+
 struct menu_interface Menu = {
    .new = menunew,
    .destroy = menudestroy,
@@ -268,6 +277,7 @@ struct menu_interface Menu = {
    .select_next = menuselectnext,
    .select_prev = menuselectprev,
    .selection = menuselection,
+   .enable_status_line = menuenablestatusline,
    .display = menudisplay,
    .match = menumatch,
    .buffer = menubuffer,

@@ -8,6 +8,7 @@
 tmenu \- tty menu
 .SH SYNOPSIS
 .B tmenu
+[\fB\-q\fR]
 [\fB\-l\fR LINES]
 [\fB\-p\fR PROMPT]
 .SH DESCRIPTION
@@ -24,6 +25,10 @@ to 3.
 .TP
 .BR \-p " " \fIPROMPT\fR
 Set the prompt shown to the user to \fIPROMPT\fR.  Defaults to \fI>>\fR.
+.TP
+.BR \-q
+Be quiet.  When quiet, no status line is displayed.  Defaults to showing
+the status line.
 .SH KEY BINDINGS
 .B tmenu
 uses the following key bindings for editing the text the user entered

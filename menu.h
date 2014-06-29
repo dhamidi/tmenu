@@ -30,6 +30,7 @@ extern struct menu_interface {
 
    void    (*set_prompt)(MENU, const char*);
    void    (*set_height)(MENU, int);
+   void    (*enable_status_line)(MENU, int);
    void    (*add_item)(MENU, const char*);
    void    (*select_next)(MENU);
    void    (*select_prev)(MENU);
