@@ -16,12 +16,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #define _POSIX_C_SOURCE 200809L
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <termios.h>
+#include <signal.h>
 
 #include "config.h"
 #include "terminal.h"
@@ -161,68 +163,99 @@ static int getitem(char* buf, size_t len, FILE* in) {
    return c != EOF;
 }
 
+/* global instances used for signal handling */
+static MENU CURRENT_MENU = NULL;
+static TERMINAL CURRENT_TERMINAL = NULL;
+
+static void update_current_menu_size(int signum) {
+   struct winsize winsize = { 0 };
+   int fd = Terminal.fd(CURRENT_TERMINAL);
+
+   if (ioctl(fd, TIOCGWINSZ, &winsize) == -1) {
+      perror(PROGRAM_NAME ":handle_winch:ioctl");
+      return;
+   }
+
+   Menu.set_max_height(CURRENT_MENU, winsize.ws_row);
+   Menu.set_max_width(CURRENT_MENU, winsize.ws_col);
+}
+
+static void initsignals(struct sigaction *act ) {
+   act->sa_handler = update_current_menu_size;
+   act->sa_flags = SA_RESTART;
+   sigemptyset(&act->sa_mask);
+   if (sigaction(SIGWINCH, act, NULL) == -1) {
+      perror(PROGRAM_NAME "initsignals:sigaction");
+      return;
+   }
+}
+
 int main(int argc, char** argv) {
    char item[MENU_ITEM_MAX_SIZE] = { 0 };
    char buf[8] = { 0 };
    action_fn action = NULL;
    int opt, fd_in;
+   struct sigaction sa;
 
-   TERMINAL term = Terminal.new("/dev/tty");
-   MENU menu = Menu.new();
+   CURRENT_TERMINAL = Terminal.new("/dev/tty");
+   CURRENT_MENU = Menu.new();
 
-   fd_in = Terminal.fd(term);
+   fd_in = Terminal.fd(CURRENT_TERMINAL);
 
    while ( (opt = getopt(argc, argv, "p:l:q")) != -1 ) {
       switch (opt) {
          case 'p':
-            Menu.set_prompt(menu, optarg);
+            Menu.set_prompt(CURRENT_MENU, optarg);
             break;
          case 'l':
-            Menu.set_height(menu, atoi(optarg));
+            Menu.set_height(CURRENT_MENU, atoi(optarg));
             break;
          case 'q':
-            Menu.enable_status_line(menu, 0);
+            Menu.enable_status_line(CURRENT_MENU, 0);
             break;
          default:
             exit(EXIT_FAILURE);
       }
    }
 
+   initsignals(&sa);
+   update_current_menu_size(0);
+
    while ( getitem(item, MENU_ITEM_MAX_SIZE, stdin) ) {
-      Menu.add_item(menu, item);
+      Menu.add_item(CURRENT_MENU, item);
    }
 
-   if (Terminal.interactive_mode(term) != TERMINAL_OK) {
+   if (Terminal.interactive_mode(CURRENT_TERMINAL) != TERMINAL_OK) {
       goto exit;
    }
 
-   Menu.match(menu);
+   Menu.match(CURRENT_MENU);
 
    /* avoid clobbering the user's prompt */
-   fputs("\n", Terminal.file(term));
+   /* fputs("\n", Terminal.file(CURRENT_TERMINAL)); */
 
-   Menu.display(menu, term);
+   Menu.display(CURRENT_MENU, CURRENT_TERMINAL);
 
    while ( read(fd_in, &buf, 8) != 0 ) {
       buf[7] = 0;
       action = KEYMAP[ (unsigned char)buf[0] ];
 
       if (!action && (unsigned char)buf[0] >= KEY_SPACE) {
-         TextBuffer.sput(Menu.buffer(menu), buf);
-         Menu.match(menu);
+         TextBuffer.sput(Menu.buffer(CURRENT_MENU), buf);
+         Menu.match(CURRENT_MENU);
       } else {
-         if (action && ! action(menu) ) {
+         if (action && ! action(CURRENT_MENU) ) {
             goto exit;
          }
       }
 
-      Menu.display(menu, term);
+      Menu.display(CURRENT_MENU, CURRENT_TERMINAL);
       memset(&buf, 0, 8);
    }
 
   exit:
-   Terminal.destroy(&term);
-   Menu.destroy(&menu);
+   Terminal.destroy(&CURRENT_TERMINAL);
+   Menu.destroy(&CURRENT_MENU);
 
    return EXIT_SUCCESS;
 }
