@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/dhamidi/tmenu.svg?branch=master)](https://travis-ci.org/dhamidi/tmenu)
+
 # Description
 
 ![git-select-file](git-select-file.gif)
