@@ -97,10 +97,14 @@ static const char* bufbefore(BUFFER self) {
    return Buffer.before(self);
 }
 
+static size_t buflen(BUFFER self) {
+   return Buffer.length(self);
+}
+
 struct buffer_interface TextBuffer = {
    .new = bufnew,
    .destroy = bufdestroy,
-
+   .length = buflen,
    .cput = bufcput,
    .sput = bufsput,
    .string = bufstring,

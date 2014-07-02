@@ -17,6 +17,11 @@ is a dynamic menu for tty devices, which reads a list of
 newline\-separated items from stdin.  When the user selects an item and
 presses Return, the selected item is printed to stdout.  Entering text
 will narrow the list of items to items that contain the entered text.
+
+Lines that are longer than the terminal is currently wide are truncated.
+When a line is truncated, a dollar sign (
+.B $
+) is displayed in the rightmost column of that line.
 .SH OPTIONS
 .TP
 .BR \-l " " \fILINES\fR
@@ -113,9 +118,5 @@ converted to UTF\-8 using
 .BR tmenu
 should handle the arrow keys, the HOME and the END key for navigating
 text.
-
-.BR tmenu
-does not display correctly if items are longer than the terminal is
-wide.  It does not handle \fISIGWINCH\fR.
 .SH AUTHOR
 Dario Hamidi <dario.hamidi@gmail.com>

@@ -25,7 +25,7 @@ typedef struct buffer * BUFFER;
 extern struct buffer_interface {
    BUFFER (*new)(size_t);
    void  (*destroy)(BUFFER*);
-
+   size_t (*length)(BUFFER);
    void  (*cput)(BUFFER, int);
    void  (*sput)(BUFFER, const char*);
    char* (*string)(BUFFER, char**, size_t*);

@@ -11,9 +11,17 @@ will narrow the list of items to items that contain the entered text.
 
 # Non/Features
 
-- written in POSIX C99
+- written in (almost POSIX conforming) C99
 - emacs-like key bindings
 - does not use ncurses
+
+**tmenu** is *almost* conforming to
+[POSIX.1-2008](http://pubs.opengroup.org/onlinepubs/9699919799/).  The
+only non-standard functionality currently used is the `TIOCGWINSZ`
+constant as `request` parameter when calling
+[ioctl](http://pubs.opengroup.org/onlinepubs/9699919799/functions/ioctl.html).
+This constant seems to be the least invasive deviation from the standard
+to query the current size of the terminal.
 
 # Installation
 

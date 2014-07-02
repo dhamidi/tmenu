@@ -31,7 +31,10 @@ struct menu {
    size_t  curmatch;
    size_t  cursor;
    char*   prompt;
+   size_t  prompt_len;
    size_t  height;
+   size_t  max_height;
+   size_t  max_width;
    size_t  y_offset;
    char*   matchbuf;
    size_t  matchbuf_len;
@@ -49,7 +52,11 @@ static MENU menunew(void) {
    menu->matches  = must_malloc(sizeof(*menu->matches) * menu->capacity);
    menu->cursor = 0;
    menu->prompt = strdup(MENU_DEFAULT_PROMPT);
+   menu->prompt_len = strlen(MENU_DEFAULT_PROMPT);
    menu->height  = MENU_DEFAULT_HEIGHT;
+
+   menu->max_height = 0;
+   menu->max_width = 0;
 
    menu->matchbuf = NULL;
    menu->matchbuf_len = 0;
@@ -82,6 +89,10 @@ static void menudestroy(MENU* self) {
    *self = NULL;
 }
 
+static int canprint(MENU self) {
+   return self->max_height - self->y_offset - 1;
+}
+
 static void prepare_matches(MENU self) {
    memset(self->matches, 0, sizeof(*self->matches) * self->len);
    TextBuffer.string(self->input, &self->matchbuf, &self->matchbuf_len);
@@ -109,6 +120,8 @@ static void menusetprompt(MENU self, const char* prompt) {
       free(self->prompt);
       self->prompt = strdup(prompt);
    }
+
+   self->prompt_len = newlen;
 }
 
 static void menusetheight(MENU self, int height) {
@@ -190,16 +203,33 @@ static BUFFER menubuffer(MENU self) {
    return self->input;
 }
 
+static void resetdisplay(MENU self, TERMINAL term) {
+   size_t i;
+   size_t n = 0;
+   if (self->y_offset >= self->max_height) {
+      n = self->max_height;
+   } else {
+      n = self->y_offset;
+   };
+
+   for (i = 0; i < n; i++) {
+      Terminal.erase(term, 2);
+      Terminal.up(term, 1);
+   }
+}
+
 static void displayprompt(MENU self, TERMINAL term) {
+   const char* lbuffer = TextBuffer.before(self->input);
    const char* inputpos = TextBuffer.after(self->input);
    size_t utf8bytes = 1;
+   size_t linelen = TextBuffer.length(self->input) + self->prompt_len + 1;
    FILE* out = Terminal.file(term);
 
-   Terminal.up(term, self->y_offset);
+   resetdisplay(self, term);
    Terminal.erase(term, 2);      /* whole line */
    Terminal.col(term, 0);
 
-   fprintf(out, "%s %s", self->prompt, TextBuffer.before(self->input));
+   fprintf(out, "%s %s", self->prompt, lbuffer);
 
    Terminal.highlight(term, 1);
    if ( inputpos[0] ) {
@@ -217,36 +247,59 @@ static void displayprompt(MENU self, TERMINAL term) {
    Terminal.highlight(term, 0);
 
    fprintf(out, "%s\n", inputpos + utf8bytes);
-
-   self->y_offset = 1;
+   self->y_offset = 1 + linelen / self->max_width;
 }
 
 static void displaymatch(MENU self, TERMINAL term, size_t i, int selected) {
    FILE* out = Terminal.file(term);
+   const char* text = self->items[self->matches[i]];
+   size_t c;
+
    Terminal.erase(term, 2); Terminal.col(term, 0);
 
    if (i < self->curmatch) {
       if (selected) Terminal.highlight(term, 1);
-      fprintf(out,"%s\n", self->items[self->matches[i]]);
+      for (c = 1; text[c - 1] && canprint(self) > 1; c++) {
+         fputc(text[c - 1], out);
+         if ( (c+1) % self->max_width == 0) {
+            fputc('$', out);
+            break;
+         }
+      }
       if (selected) Terminal.highlight(term, 0);
+      fputc('\n', out);
    } else {
       fprintf(out,"\n");
    }
 }
 
+static size_t height_for_matches(MENU self) {
+   size_t offset = 1 /* prompt */
+      + 1 /* trailing newline */
+      + (self->status_line_enabled != 0);
+
+   if (self->height > self->max_height - offset) {
+      return self->max_height - offset;
+   } else {
+      return self->height;
+   }
+}
+
 static void displaymatches(MENU self, TERMINAL term) {
-   size_t page = self->cursor / self->height;
-   size_t item = self->cursor % self->height;
+   size_t height = height_for_matches(self);
+   size_t page = self->cursor / height;
+   size_t item = self->cursor % height;
    size_t i;
-   for (i = 0; i < self->height; i++) {
-      displaymatch(self, term, (page * self->height) + i, i == item );
+
+   for (i = 0; i < height && canprint(self) > 1; i++) {
+      displaymatch(self, term, (page * height) + i, i == item );
       self->y_offset++;
    }
 }
 
 static void displayposition(MENU self, TERMINAL term) {
    FILE* out = Terminal.file(term);
-
+   if (!canprint(self)) { return; }
    if (self->status_line_enabled) {
       Terminal.erase(term, 2); Terminal.col(term, 0);
       fprintf(out,"[%ld/%ld match(es)]\n",
@@ -257,11 +310,19 @@ static void displayposition(MENU self, TERMINAL term) {
 
 static void menudisplay(MENU self, TERMINAL term) {
    displayprompt(self, term);
-
+   if (!canprint(self)) { return; }
    if (self->len > 0) {
       displaymatches(self, term);
       displayposition(self, term);
    }
+}
+
+static void menusetmaxwidth(MENU self, int width) {
+   self->max_width = width;
+}
+
+static void menusetmaxheight(MENU self, int height) {
+   self->max_height = height;
 }
 
 static void menuenablestatusline(MENU self, int enabled) {
@@ -281,4 +342,6 @@ struct menu_interface Menu = {
    .display = menudisplay,
    .match = menumatch,
    .buffer = menubuffer,
+   .set_max_width = menusetmaxwidth,
+   .set_max_height = menusetmaxheight,
 };
