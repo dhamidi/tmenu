@@ -23,7 +23,7 @@ PREFIX=/usr/local
 tmenu: main.o terminal.o textbuffer.o buffer.o menu.o util.o
 	script/link $@ main.o terminal.o textbuffer.o buffer.o menu.o util.o
 
-install: tmenu test
+install: tmenu
 	mkdir -p $(PREFIX)/bin
 	cp tmenu $(PREFIX)/bin/
 	chmod 755 $(PREFIX)/bin/tmenu
