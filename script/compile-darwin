@@ -1,0 +1,2 @@
+#!/bin/sh
+cc -g -std=c99 -pedantic -Wall -Werror -D_DARWIN_C_SOURCE -c -o $2 $1

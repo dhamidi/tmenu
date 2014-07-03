@@ -17,11 +17,17 @@ will narrow the list of items to items that contain the entered text.
 
 **tmenu** is *almost* conforming to
 [POSIX.1-2008](http://pubs.opengroup.org/onlinepubs/9699919799/).  The
-only non-standard functionality currently used is the `TIOCGWINSZ`
-constant as `request` parameter when calling
-[ioctl](http://pubs.opengroup.org/onlinepubs/9699919799/functions/ioctl.html).
-This constant seems to be the least invasive deviation from the standard
-to query the current size of the terminal.
+only non-standard functionality currently used is:
+
+- the `TIOCGWINSZ` constant as `request` parameter when calling
+  [ioctl](http://pubs.opengroup.org/onlinepubs/9699919799/functions/ioctl.html).
+  This constant seems to be the least invasive deviation from the standard
+  to query the current size of the terminal.
+
+- the `SIGWINCH` constant as `sig` parameter when calling `signal`.  It
+  is used for listening to resize events of the terminal window.  The
+  existence of `SIGWINCH` is not required by the standard. See
+  [<signal.h>](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html).
 
 # Installation
 
