@@ -46,9 +46,15 @@ buffer.o: util.o config.h script/compile buffer.h buffer.c
 buffer_test: buffer_test.o buffer.o util.o script/link
 	script/link $@ buffer_test.o buffer.o util.o
 
+menu_test: menu_test.o util.o textbuffer.o buffer.o terminal.o script/link
+	script/link $@ menu_test.o util.o textbuffer.o terminal.o buffer.o
+
+menu_test.o: menu.c
+
 menu.o: util.o config.h textbuffer.o buffer.o script/compile menu.h menu.c
 
-test: script/test buffer_test
+test: script/test buffer_test menu_test
+	./menu_test
 	script/test buffer_test
 
 clean:

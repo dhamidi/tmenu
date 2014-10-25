@@ -154,6 +154,7 @@ static int menugrow(MENU self) {
    free( self->items );
    free( self->matches );
 
+   self->capacity = new_capacity;
    self->items = new_items;
    self->matches = new_matches;
 
