@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fnmatch.h>
 
 struct menu {
    char**  items;
@@ -188,16 +189,25 @@ static void addmatch(MENU self, size_t index) {
    self->matches[self->curmatch++] = index;
 }
 
+static char* pattern(MENU self) {
+    size_t pattern_len = 3 + self->matchbuf_len;
+    char* pattern = must_malloc(pattern_len);
+    snprintf(pattern, pattern_len, "*%s*", self->matchbuf);
+    return pattern;
+}
+
 static void menumatch(MENU self) {
    size_t i = 0;
-
    prepare_matches(self);
-
+   char* searchpattern = pattern(self);
    for (i = 0; i < self->len; i++) {
       if ( strstr(self->items[i], self->matchbuf) != NULL ) {
          addmatch(self, i);
+      } else if ( fnmatch(searchpattern, self->items[i], 0) == 0 ) {
+         addmatch(self, i);
       }
    }
+   free( searchpattern );
 }
 
 static BUFFER menubuffer(MENU self) {

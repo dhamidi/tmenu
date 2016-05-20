@@ -1,4 +1,4 @@
-.\" Copyright (C), 2014  Dario Hamidi
+.\" Copyright (C), 2014-2016  Dario Hamidi
 .\" You may distribute this file under the terms of the GNU Free
 .\" Documentation License.
 .\"
@@ -17,6 +17,10 @@ is a dynamic menu for tty devices, which reads a list of
 newline\-separated items from stdin.  When the user selects an item and
 presses Return, the selected item is printed to stdout.  Entering text
 will narrow the list of items to items that contain the entered text.
+
+Patterns as recognized by \fBfnmatch(3)\fR are matched as well.  The input
+string is surrounded with asterisks (\fB*\fR) to have the pattern match
+anywhere in the input string.
 
 Lines that are longer than the terminal is currently wide are truncated.
 When a line is truncated, a dollar sign (
