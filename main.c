@@ -167,6 +167,11 @@ static int getitem(char* buf, size_t len, FILE* in) {
 static MENU CURRENT_MENU = NULL;
 static TERMINAL CURRENT_TERMINAL = NULL;
 
+static void handle_interrupt(int signum) {
+  Terminal.destroy(&CURRENT_TERMINAL);
+  exit(0);
+}
+
 static void update_current_menu_size(int signum) {
    struct winsize winsize = { 0 };
    int fd = Terminal.fd(CURRENT_TERMINAL);
@@ -188,6 +193,11 @@ static void initsignals(struct sigaction *act ) {
    if (sigaction(SIGWINCH, act, NULL) == -1) {
       perror(PROGRAM_NAME "initsignals:sigaction");
       return;
+   }
+
+   act->sa_handler = handle_interrupt;
+   if (sigaction(SIGINT, act, NULL) == -1) {
+     perror(PROGRAM_NAME "initsignals:sigaction");
    }
 }
 
