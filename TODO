@@ -1,0 +1,200 @@
+# tmenu TODO
+
+This document tracks issues that must be addressed to make tmenu actually usable
+and maintainable in 2024 and beyond.
+
+---
+
+## 1. CI/CD: Replace Travis CI
+
+Travis CI shut down its free tier for open-source projects. The `.travis.yml`
+file and the build badge in README.md are dead.
+
+- Migrate to GitHub Actions (add `.github/workflows/build.yml`)
+- Test on Linux and macOS matrix
+- Remove `.travis.yml`
+- Fix the broken badge in README.md
+
+---
+
+## 2. Correctness: UTF-8 Detection Threshold Is Wrong
+
+In two places the code uses `> 0x70` to detect multi-byte UTF-8 sequences:
+
+- `menu.c:248`  (`displayprompt`)
+- `textbuffer.c:25` (`bufbackward`)
+
+The correct threshold for a UTF-8 lead byte is `>= 0xC0`; continuation bytes
+have the pattern `10xxxxxx` (i.e. `(byte & 0xC0) == 0x80`).  The current
+threshold `> 0x70` incorrectly treats printable ASCII characters `0x71–0x7F`
+(`q r s t u v w x y z { | } ~ DEL`) as multi-byte lead bytes, causing cursor
+movement and display to break for any input containing those characters.
+
+---
+
+## 3. Safety: Signal Handlers Call Non-Async-Signal-Safe Functions
+
+`update_current_menu_size` (called on `SIGWINCH`) invokes `Menu.display`, which
+calls `fprintf` and other stdio functions.  `handle_interrupt` (called on
+`SIGINT`) calls `Terminal.destroy` (which uses `tcsetattr`, `fclose`, `free`)
+and then `exit`.  None of these are async-signal-safe per POSIX.
+
+Fix: in each signal handler set a `volatile sig_atomic_t` flag only; act on
+the flag in the main event loop.
+
+---
+
+## 4. Safety: `SIGTERM` Not Handled — Terminal Left in Raw Mode
+
+If the process receives `SIGTERM` (e.g. `kill`, system shutdown) the terminal
+is left in raw/no-echo mode, breaking the calling shell.  Add a `SIGTERM`
+handler that restores terminal settings before exiting.
+
+---
+
+## 5. Usability: Cancellation Exits With Code 0
+
+Pressing `Ctrl-C` restores the terminal and exits with code `0`, making it
+impossible for scripts to distinguish "user confirmed a selection" from "user
+cancelled".  The conventional behaviour is to exit with a non-zero code (e.g.
+`1` or `130`) on cancellation.  Additionally, the `Escape` key is not bound at
+all; it should also cancel with a non-zero exit code.
+
+---
+
+## 6. Usability: Arrow Keys Not Supported
+
+Only Emacs-style bindings work.  Most users expect `↑`/`↓` to navigate the
+list and `←`/`→` to move the cursor.  Arrow keys send multi-byte escape
+sequences (`\033[A`, `\033[B`, etc.); the current single-character keymap
+array (`KEYMAP[256]`) cannot represent them.
+
+The input loop in `main.c` reads up to 8 bytes at a time but only dispatches
+on `buf[0]`, silently discarding the rest of any escape sequence.
+
+---
+
+## 7. Correctness: `bufexpand` Has an Off-by-One Error
+
+In `buffer.c:88`, after relocating the after-gap content into the new
+allocation, `gapend` is updated as:
+
+```c
+self->gapend = new_capacity - self->gapend;
+```
+
+`bufafter()` returns `data + gapend - 1`.  With the new value, that pointer
+lands one byte before the relocated content.  The correct update is:
+
+```c
+self->gapend = new_capacity - (old_capacity - self->gapend);
+```
+
+or equivalently `self->gapend += BUFFER_GROW_BY`.
+
+---
+
+## 8. Robustness: Hard Item-Length Limit Silently Truncates Input
+
+`getitem()` in `main.c` reads at most `MENU_ITEM_MAX_SIZE - 1` (2047) bytes per
+line and discards the rest without any warning.  Items longer than this are
+silently truncated, which can cause incorrect matching or misleading output.
+Either increase the limit, make it dynamic, or emit a warning on truncation.
+
+---
+
+## 9. Robustness: Hard Item-Count Limit Is Easy to Hit
+
+`MENU_MAX_ITEMS` is 10 000.  Commands like `git ls-files` on large monorepos
+easily exceed this.  When the limit is hit the program prints an error to
+stderr but continues—silently dropping items and giving incomplete results with
+no non-zero exit code.
+
+Options: raise the limit, make capacity fully dynamic (no hard cap), or exit
+with an error.
+
+---
+
+## 10. Code Quality: Magic Numbers for Line Navigation
+
+`action_beginning_of_line` and `action_end_of_line` in `main.c` move the
+cursor by the hardcoded value `10000`:
+
+```c
+TextBuffer.backward(Menu.buffer(menu), 10000);
+TextBuffer.forward(Menu.buffer(menu), 10000);
+```
+
+This works incidentally because no line is expected to exceed 10 000 chars, but
+it is fragile and misleading.  Add `TextBuffer.beginning_of_line()` /
+`TextBuffer.end_of_line()` operations, or use `SIZE_MAX` with a comment.
+
+---
+
+## 11. Code Quality: Redundant Match Logic in `menumatch`
+
+`menumatch()` first tests `strstr(item, pattern)` and, only if that fails,
+falls back to `fnmatch("*pattern*", item, 0)`.  A `fnmatch` glob `*pattern*`
+matches every string that `strstr` matches (and more), so the `strstr` branch
+is effectively a subset of what fnmatch would do anyway.  The stated feature
+is "fuzzy matching" but the implementation is just substring search with an
+unreachable glob fallback.  Decide on a matching strategy and implement it
+cleanly.
+
+---
+
+## 12. Code Quality: `menu_test.c` Includes `menu.c` Directly
+
+```c
+#include "menu.c"
+```
+
+This is a common workaround to access internal (`static`) functions from tests,
+but it means the translation unit is compiled twice and changes to the
+compilation flags of the library unit may not apply to the test.  Either expose
+internal helpers through a test-only header, or use link-time symbol visibility.
+
+---
+
+## 13. Code Quality: `script/test` Uses Uninitialized Variable
+
+In `script/test`, `TEST_VALGRIND` is only set if `valgrind` is found.  The
+final `exit $(( TEST_DIFFERENCES + TEST_VALGRIND ))` will expand to an
+arithmetic expression with an unset variable, which evaluates to `0` in most
+shells—masking a situation where only the Valgrind check would have caught an
+error.  Initialise `TEST_VALGRIND=0` at the top of the script.
+
+---
+
+## 14. Build System: Fragmented Compile Scripts
+
+The build uses `script/compile` (which detects the OS and dispatches to
+`script/compile-darwin` or a fallback), rather than using standard build
+system conventions (`CFLAGS`, `CC`).  This makes it hard to cross-compile, use
+alternative compilers, or integrate with package managers.  Consider replacing
+the script dispatch with standard Makefile variables and a single rule that
+honours `CC` and `CFLAGS`.
+
+---
+
+## 15. Build System: Incorrect Dependency for `textbuffer.o`
+
+In the Makefile:
+
+```make
+textbuffer.o: textbuffer.h textbuffer.c buffer.h buffer.c
+```
+
+`textbuffer.o` should not depend on `buffer.c` (a source file); it should
+depend on `buffer.h` (the header) and on the `buffer.o` object file if ordering
+matters.  Depending on a `.c` source file in a `.o` rule is unusual and can
+cause spurious recompilation.
+
+---
+
+## 16. Packaging: No Version Number, No Release Artefacts
+
+`config.h` defines `PROGRAM_NAME` but no `PROGRAM_VERSION`.  There is no
+`--version` flag, no version tag in the man page date, and no `dist` Makefile
+target.  Add a version string and wire it to `--version` output and the man
+page.
