@@ -22,7 +22,7 @@ static void bufbackward(BUFFER self, int n) {
    size_t pos = before_len - 1;
 
    while (n --> 0) {
-      if ( (unsigned char)before[pos] <= 0x70) {
+      if ( (unsigned char)before[pos] <= 0x7F) {
          // ASCII
          Buffer.backward(self, 1);
       } else {

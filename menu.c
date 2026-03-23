@@ -245,7 +245,7 @@ static void displayprompt(MENU self, TERMINAL term) {
    Terminal.highlight(term, 1);
    if ( inputpos[0] ) {
       fprintf(out, "%c", inputpos[0]);
-      if ( (unsigned char)inputpos[0] > 0x70 ) {
+      if ( (unsigned char)inputpos[0] > 0x7F ) {
          // UTF-8
          while ( (unsigned char)inputpos[utf8bytes] >> 6 == 2) {
             fprintf(out, "%c", inputpos[utf8bytes]);
