@@ -128,6 +128,29 @@ static int action_end_of_line(MENU menu) {
 }
 
 static int action_confirm(MENU menu) {
+   /* Bugfix: 03/09/2017 | Will Burgin (WebsterXC)
+    * ISSUE #15
+    *
+    * If the N characters in the buffer string don't
+    * match the first N characters of the menu selection,
+    * then we should return the user input, not the first
+    * random menu selection.
+    *
+    * If the user enters >64 chars in the buffer string,
+    * only the first 64 chars of user input will be printed.
+    */
+
+   size_t buflen = 64;
+   char *retstring = (char *)malloc(sizeof(char) * buflen);  
+
+   retstring = Buffer.string( Menu.buffer(menu), &retstring, &buflen );
+
+   // Match fail. Return user input.
+   if(strncmp( Menu.selection(menu), retstring, strlen(retstring) ) != 0){
+	fprintf(stdout, "No match found for: %s\n", retstring);
+	return 0;
+   }
+   // Match exists, return menu selection.
    fprintf(stdout, "%s\n", Menu.selection(menu));
    return 0;
 }
