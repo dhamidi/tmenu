@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
 
    fd_in = Terminal.fd(CURRENT_TERMINAL);
 
-   while ( (opt = getopt(argc, argv, "p:l:q")) != -1 ) {
+   while ( (opt = getopt(argc, argv, "p:l:qi")) != -1 ) {
       switch (opt) {
          case 'p':
             Menu.set_prompt(CURRENT_MENU, optarg);
@@ -223,6 +223,9 @@ int main(int argc, char** argv) {
             break;
          case 'q':
             Menu.enable_status_line(CURRENT_MENU, 0);
+            break;
+         case 'i':
+            Menu.set_insensitive(CURRENT_MENU, 1);
             break;
          default:
             exit(EXIT_FAILURE);

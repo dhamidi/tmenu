@@ -17,7 +17,7 @@
 
 PREFIX=/usr/local
 
-.c.o: script/compile
+.o: script/compile
 	script/compile $< $@
 
 tmenu: main.o terminal.o textbuffer.o buffer.o menu.o util.o

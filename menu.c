@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 #include "menu.h"
 
 #include "util.h"
@@ -41,6 +42,7 @@ struct menu {
    size_t  matchbuf_len;
    BUFFER  input;
    int     status_line_enabled;
+   int     case_insenstive;
 };
 
 static MENU menunew(void) {
@@ -64,6 +66,7 @@ static MENU menunew(void) {
    menu->input = TextBuffer.new(0);
 
    menu->status_line_enabled = MENU_DEFAULT_STATUS_LINE;
+   menu->case_insenstive=0;
 
    return menu;
 }
@@ -201,7 +204,7 @@ static void menumatch(MENU self) {
    prepare_matches(self);
    char* searchpattern = pattern(self);
    for (i = 0; i < self->len; i++) {
-      if ( strstr(self->items[i], self->matchbuf) != NULL ) {
+      if ( (self->case_insenstive == 1 ? strcasestr(self->items[i], self->matchbuf) : strstr(self->items[i], self->matchbuf)) != NULL ) {
          addmatch(self, i);
       } else if ( fnmatch(searchpattern, self->items[i], 0) == 0 ) {
          addmatch(self, i);
@@ -335,6 +338,9 @@ static void menusetmaxwidth(MENU self, int width) {
 static void menusetmaxheight(MENU self, int height) {
    self->max_height = height;
 }
+static void menusetinsensitive(MENU self, int b) {
+    self->case_insenstive = b;
+}
 
 static void menuenablestatusline(MENU self, int enabled) {
    self->status_line_enabled = enabled;
@@ -355,4 +361,5 @@ struct menu_interface Menu = {
    .buffer = menubuffer,
    .set_max_width = menusetmaxwidth,
    .set_max_height = menusetmaxheight,
+   .set_insensitive = menusetinsensitive,
 };
